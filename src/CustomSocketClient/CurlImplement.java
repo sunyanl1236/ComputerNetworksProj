@@ -1,3 +1,4 @@
+package CustomSocketClient;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,11 +28,11 @@ public class CurlImplement {
 	private String argsBody; //parse -d
 	private String argsFile; //parse -f
 	private String argsOutFileName;
-	protected boolean hasVerbose = false; //parse -v
-	protected boolean hasHeaders = false;
-	protected boolean hasData = false;
-	protected boolean hasFile = false;
-	protected boolean hasOutputFile = false;
+	public boolean hasVerbose = false; //parse -v
+	public boolean hasHeaders = false;
+	public boolean hasData = false;
+	public boolean hasFile = false;
+	public boolean hasOutputFile = false;
 	
 	//all command constant
 	private final String VERBOSE = "v";
@@ -53,10 +54,6 @@ public class CurlImplement {
 		if(validateArgs(args)) {
 			//System.out.println("Valid args");
 			parseOptions(args);
-//			if(!this.method.isEmpty()) {
-//				System.out.println("method: "+ this.method);
-//			}
-//			System.out.println("URL: "+ this.argUrl.toString());
 		}
 		else {
 			System.out.println("Invalid args");

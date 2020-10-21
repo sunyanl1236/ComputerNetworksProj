@@ -1,5 +1,9 @@
 import java.net.URL;
 
+import CustomSocketClient.CurlImplement;
+import CustomSocketClient.HttpRequestGenerator;
+import CustomSocketClient.SocketClient;
+
 public class httpc {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
