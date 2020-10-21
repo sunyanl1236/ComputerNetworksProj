@@ -22,8 +22,8 @@ public class ServerCLIImplement {
 	public boolean hasDebugMsg = false; //parse -v
 	public boolean hasDir = false; //parse -d
 	public boolean hasPortNum = false; //parse -p
-	private String argsPortNum; //parse -p
-	private String argsDir; //parse -d
+	private int argsPortNum = 8080; //parse -p
+	private String argsDir = ""; //parse -d
 	
 	//all command constant
 	private final String DEBUGMSG = "v";
@@ -93,8 +93,21 @@ public class ServerCLIImplement {
 				
 				//has option -p and parse port number
 				if(cmd.hasOption(PORT_NUM)) {
-					this.hasPortNum = true;
-					this.argsPortNum = cmd.getOptionValue(PORT_NUM);
+					int parsedPortNum = Integer.parseInt(cmd.getOptionValue(PORT_NUM));
+					
+					//check if the parsed port number is reserved or invalid
+					if(parsedPortNum >= 1 && parsedPortNum <= 1023) {
+						System.out.println("Port number "+ parsedPortNum + " is reserved. Please enter a non-reserved port number.");
+					} 
+					else if (parsedPortNum<= 65535){
+						this.hasPortNum = true;
+						this.argsPortNum = parsedPortNum;
+						System.out.println("Current port number is "+this.argsPortNum);
+					}
+					else {
+						System.out.println("Non-existing port number. Please enter a valid port number.");
+					}
+						
 				}
 				
 				//has option -v
