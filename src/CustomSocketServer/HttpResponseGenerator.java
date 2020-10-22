@@ -10,16 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import CustomSocketClient.HttpRequestGenerator;
 
 public class HttpResponseGenerator {
 	/* Using singleton pattern to create one and only one request for each command line
@@ -66,12 +60,12 @@ public class HttpResponseGenerator {
 		}
 		
 		//return the status code
-		public void processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite) {
+		public void processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
 			if(requestMethod.toUpperCase().equals("GET")) {
 				processGetReq(queryDir, rootDir);
 			}
 			else if(requestMethod.toUpperCase().equals("POST")) {
-				
+				processPostReq(queryDir, rootDir, hasOverwrite, reqBody);
 			}
 			else {
 				this.statusCode = 400;
@@ -179,7 +173,7 @@ public class HttpResponseGenerator {
 			}
 		}
 		
-		//*** 
+
 		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
 			//check secure access, if go outside of the root directory, return directly
 			if(!checkSecureAccess(queryDir)) {
@@ -225,6 +219,7 @@ public class HttpResponseGenerator {
 						}
 						else { //file doesn't exist, create file
 							Files.createFile(p);
+							this.statusCode = 201;
 						}
 						
 						FileWriter fw;
@@ -236,6 +231,7 @@ public class HttpResponseGenerator {
 						
 						//set if anyone can overwrite it
 						f.setWritable(hasOverwrite);
+						this.statusCode = 200;
 					} 
 					catch (IOException e) {
 						e.printStackTrace();

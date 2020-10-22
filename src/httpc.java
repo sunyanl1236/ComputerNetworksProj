@@ -20,11 +20,13 @@ public class httpc {
 			reqGenerator.setReqHeader(curl.getHeaders());
 		}
 		reqGenerator.setReqMethod(curl.getMethod());
+		reqGenerator.setHasOverwrite(curl.getHasOverwrite());
 		
 		String outFileName="";
 		if(curl.hasOutputFile) {
 			outFileName = curl.getOutFileName();
 		}
+		
 		
 		URL url = curl.getUrl();
 		String host = url.getHost();

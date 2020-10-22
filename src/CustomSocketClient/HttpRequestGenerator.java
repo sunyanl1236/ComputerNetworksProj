@@ -12,6 +12,7 @@ public class HttpRequestGenerator {
 	private String reqBody;
 	private String reqQueryParam;
 	private String hostName;
+	private boolean hasOverwrite;
 	
 	//constructor
 	private HttpRequestGenerator() {}
@@ -46,6 +47,10 @@ public class HttpRequestGenerator {
 		this.hostName = host;
 	}
 	
+	public void setHasOverwrite(boolean hasOverwrite) {
+		this.hasOverwrite = hasOverwrite;
+	}
+	
 	public String printReq() {
 		StringBuilder sb = new StringBuilder();
 		//request line
@@ -68,6 +73,9 @@ public class HttpRequestGenerator {
 			sb.append("Content-Length: ").append(this.reqBody.length()).append("\r\n");
 		}
 		sb.append("User-Agent: Concordia-HTTP/1.0\r\n").append("Host: ").append(this.hostName).append("\r\n");
+		
+		//custom header info
+		sb.append("Has-Overwrite: ").append(Boolean.toString(this.hasOverwrite)).append("\r\n");
 		sb.append("\r\n");
 		
 		/* check GET and POST request body in main

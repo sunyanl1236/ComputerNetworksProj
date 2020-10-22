@@ -7,7 +7,6 @@ import CustomSocketServer.ServerCLIImplement;
 public class httpfs {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 //		System.out.println("Hello wORLD.");
 		
 		ServerSocket serverSocket = null;
@@ -19,7 +18,7 @@ public class httpfs {
 		try {
 			serverSocket = new ServerSocket(portNumber);
 			while(listening) {
-				new MultiServerThread(serverSocket.accept()).start();
+				new MultiServerThread(serverSocket.accept(), parseCommand.getRootDirPath()).start();
 			}
 			
 			if(serverSocket != null) {
@@ -27,7 +26,7 @@ public class httpfs {
 			}
 		}
 		catch(IOException e) {
-			System.out.println("Could not listen on port "+ portNumber);
+			System.err.println("Could not listen on port "+ portNumber);
 			System.exit(-1);
 		}
 	}
