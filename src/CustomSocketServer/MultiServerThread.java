@@ -16,7 +16,9 @@ public class MultiServerThread extends Thread{
 	private String rootDir;
 	private String reqBody;
 	private String response;
-	private boolean hasOverwrite;
+	private boolean hasOverwrite = false;
+	private boolean hasContentLength = false;
+	private int contentLen = 0;
 	
 	
 	public MultiServerThread(Socket cSocket, String rootDir) {
@@ -30,15 +32,46 @@ public class MultiServerThread extends Thread{
 			out = new PrintWriter(clientSocket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			
-			String reqIn="", readIn="";
-			while((readIn=in.readLine()) != null) {
-				//print request
-				System.out.println(readIn);
-				reqIn += readIn;
-			}
+			StringBuilder request = new StringBuilder();
+			String line="";
 			
-			//parse requestMethod, queryDir, reqBody from request
-			parseRequest(reqIn);
+			//read request line and header
+			do {
+				line = in.readLine();
+				if(line.contains("GET") || line.contains("POST")) {
+					//split the request line by " "
+					String[] reqLineArr = line.split(" ");
+					this.requestMethod = reqLineArr[0];
+					System.out.println("requestMethod: "+this.requestMethod);
+					this.queryDir = reqLineArr[1];
+					System.out.println("queryDir: "+this.queryDir);
+				}
+				if(line.contains("Content-Length")) {
+					this.hasContentLength = true;
+					String[] contentLenArr = line.split(" :");
+					this.contentLen = Integer.parseInt(contentLenArr[1]);
+					System.out.println("hasContentLength: "+ this.hasContentLength + "contentLen" + this.contentLen);
+				}
+				if(line.contains("Has-Overwrite")) {
+					String[] hasOverwriterArr = line.split(" :");
+					this.hasOverwrite = Boolean.parseBoolean(hasOverwriterArr[1]);
+					System.out.println("hasOverwrite: "+ this.hasOverwrite);
+				}
+				if(line.equals("")) {
+					break;
+				}
+				request.append(line);
+			}
+			while(true);
+			
+			//if has content length, read request body
+			if(this.hasContentLength) {
+				char c;
+				for(int j=0; j< this.contentLen; j++) {
+					c = (char)in.read();
+					this.reqBody += c;
+				}
+			}
 			
 			//get response
 			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody);
@@ -56,33 +89,6 @@ public class MultiServerThread extends Thread{
 		}
 		catch(IOException e) {
 			e.printStackTrace();
-		}
-	}
-	
-	public void parseRequest(String req) {
-		String[] reqArr = req.split("\r\n");
-		
-		//test
-		for(String ss : reqArr) {
-			System.out.println("check req array");
-			System.out.println(ss);
-			
-			if(ss.contains("Has-Overwrite")) {
-				String[] headerArr = ss.split(" :");
-				this.hasOverwrite = Boolean.parseBoolean(headerArr[1]);
-			}
-		}
-		
-		//split the request line by " "
-		String[] reqLineArr = reqArr[0].split(" ");
-		this.requestMethod = reqLineArr[0];
-		System.out.println("requestMethod: "+this.requestMethod);
-		this.queryDir = reqLineArr[1];
-		System.out.println("queryDir: "+this.queryDir);
-		
-		
-		if(this.requestMethod.toUpperCase().equals("POST")) {
-			this.reqBody = reqArr[reqArr.length-1];
 		}
 	}
 }
