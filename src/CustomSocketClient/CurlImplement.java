@@ -30,6 +30,7 @@ public class CurlImplement {
 	private String argsOutFileName;
 	public boolean hasVerbose = false; //parse -v
 	public boolean hasHeaders = false;
+	public boolean hasOverwrite = false; 
 	public boolean hasData = false;
 	public boolean hasFile = false;
 	public boolean hasOutputFile = false;
@@ -40,6 +41,7 @@ public class CurlImplement {
 	private final String DATA = "d";
 	private final String FILE = "f";
 	private final String OUT = "o";
+	private final String OVERWRITE = "w"; //if allows write permission
 	private final String GET_OPTION = "get";
 	private final String POST_OPTION = "post";
 	private final String HELP = "help";
@@ -71,6 +73,7 @@ public class CurlImplement {
 		postOptions.addOption(VERBOSE, false, "Prints the details of the response such as protocol, status, and headers.");
 		postOptions.addOption(HEADERS, true, "Associates headers to HTTP Request with the format 'key:value'.");
 		postOptions.addOption(OUT, true, "Allow the HTTP client to write the body of the response to the specified file instead of the console.");
+		postOptions.addOption(OVERWRITE, false, "Overwrite the file specified by the method in the data directory with the content of the body of the request.");
 		
 		getOptions.addOption(VERBOSE, false, "Prints the details of the response such as protocol, status, and headers.");
 		getOptions.addOption(HEADERS, true, "Associates headers to HTTP Request with the format 'key:value'.");
@@ -196,6 +199,9 @@ public class CurlImplement {
 				this.hasOutputFile = true;
 				argsOutFileName = cmd.getOptionValue(OUT);
 			}
+			if(cmd.hasOption(OVERWRITE)) {
+				this.hasOverwrite = true;
+			}
 		} 
 		catch(ParseException e) {
 			System.out.println(e.getMessage());
@@ -243,5 +249,9 @@ public class CurlImplement {
 	
 	public String getOutFileName() {
 		return argsOutFileName;
+	}
+	
+	public Boolean getHasOverwrite() {
+		return this.hasOverwrite;
 	}
 }

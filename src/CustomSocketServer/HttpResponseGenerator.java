@@ -3,6 +3,7 @@ package CustomSocketServer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -32,6 +33,7 @@ public class HttpResponseGenerator {
 		//constructor
 		private HttpResponseGenerator() {
 			statusCodePhrase.put(200, "200 OK");
+			statusCodePhrase.put(204, "204 No Content");
 			statusCodePhrase.put(404, "404 Not Found");
 			statusCodePhrase.put(201, "201 Created");
 			statusCodePhrase.put(400, "400 Bad Request");
@@ -81,6 +83,11 @@ public class HttpResponseGenerator {
 			Path path = Paths.get(rootDir+queryDir);
 			System.out.println("Full path is "+rootDir+queryDir);
 			
+			//check secure access, if go outside of the root directory, return directly
+			if(!checkSecureAccess(queryDir)) {
+				return;
+			}
+			
 			try {
 				if(Files.isDirectory(path)) { //check if the path is a dir
 //				System.out.println("It's a directory.");
@@ -88,18 +95,25 @@ public class HttpResponseGenerator {
 						//print all the dir and files in this path
 						DirectoryStream<Path> dirStream = Files.newDirectoryStream(path);
 						for (Path entry : dirStream) {
-							this.statusCode = 200;
 							resBody += "The request path is a directory, print all files and directories in the path: ";
 							resBody += (entry.getFileName().toString()+"/n");  
 						}
 						
-						//add Content-Length header
-						resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
-						
-						//add Content-Type header
-						resHeader.put("Content-Type", "text/plain");
-						
-						System.out.println(resBody);
+						if(!this.resBody.isEmpty()) {
+							this.statusCode = 200;
+							
+							//add Content-Length header
+							resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
+							
+							//add Content-Type header
+							resHeader.put("Content-Type", "text/plain");
+							
+							System.out.println(resBody);
+						}
+						else {
+							this.statusCode = 204;
+							System.out.println("empty file");
+						}
 					}
 					else { //if not readable
 						this.statusCode = 403;
@@ -129,12 +143,21 @@ public class HttpResponseGenerator {
 						
 						this.resBody = sb.toString();
 						
-						//add Content-Length header
-						resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
-						//add Content-Type header
-						resHeader.put("Content-Type", mimeType);
+						if(!this.resBody.isEmpty()) {
+							this.statusCode = 200;
+							
+							//add Content-Length header
+							resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
+							//add Content-Type header
+							resHeader.put("Content-Type", mimeType);
+							
+							System.out.println(resBody);
+						} else {
+							this.statusCode = 204;
+							System.out.println("empty file");
+						}
+							
 						
-						System.out.println(resBody);
 					}
 					else {
 						this.statusCode = 403;
@@ -156,9 +179,110 @@ public class HttpResponseGenerator {
 			}
 		}
 		
-		//*** implement overwrite options in Client
-		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite) {
+		//*** 
+		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
+			//check secure access, if go outside of the root directory, return directly
+			if(!checkSecureAccess(queryDir)) {
+				return;
+			}
 			
+			String fullPath = rootDir;
+			String[] splittedQueryDir = queryDir.split("/");
+			for(int i=0; i< splittedQueryDir.length; i++) {
+				fullPath = rootDir+File.separator+splittedQueryDir[i];
+				Path p = Paths.get(fullPath);
+				
+				if(i != splittedQueryDir.length-1) { //if not the last elt --> dir
+					//check if it's Dir (everthing in between the root folder and last element should be directory)
+					if(	Files.isDirectory(p)) { //dir exists
+						//if the dir is readable, go to the dir
+						//if the dir is not readable, end function
+						if(!Files.isReadable(p)) { 
+							this.statusCode = 403;
+							System.out.println("Cannot read the dir.");
+							return;
+						}
+					}
+					else {//if dir not exists, create the folder
+						try {
+							System.out.println(p.toString()+ "doesn't exist, create the dir.");
+							Files.createDirectory(p);
+						} catch (IOException e) {
+							System.out.println("e createDirectory");
+							e.printStackTrace();
+						}
+					}
+				}
+				else { //if is last elt --> file
+					try {
+						if(	Files.isRegularFile(p)) { //file exists
+							//check permission
+							if(!Files.isWritable(p)) {
+								this.statusCode = 403;
+								System.out.println("Cannot write the file.");
+								return;
+							}
+						}
+						else { //file doesn't exist, create file
+							Files.createFile(p);
+						}
+						
+						FileWriter fw;
+						File f = p.toFile();
+						fw = new FileWriter(f);
+						fw.write(reqBody);
+						fw.close();
+						System.out.println("Successfully wrote to the file.");
+						
+						//set if anyone can overwrite it
+						f.setWritable(hasOverwrite);
+					} 
+					catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+				}
+			}
+			
+		}
+		
+		/* if the queryDir starts with /.., return false
+		 * if the queryDir is /dir1/../../.. return false
+		 * otherwise, return true
+		 * */
+		public boolean checkSecureAccess(String queryDir) {
+			int countDirFile = 0;
+			int countUpOneFolder = 0;
+			String[] splittedDir = queryDir.split("/");
+			
+			if(splittedDir.length > 0) {
+				//case 1: rootDir/..
+				if(splittedDir[0].equals("..")) {
+					this.statusCode = 403;
+					return false;
+				}
+				
+				//loop through the string array and check secure access
+				for(String s : splittedDir) {
+					//first string s is dir or file
+					if(s.equals("..")) {
+						countUpOneFolder++;
+					} else {
+						countDirFile++;
+					}
+					
+					/* case 2:
+					 * rootDir/dir/../.. --> outside of rootDir
+					 * rootDir/dir/../dir/../.. --> outside of rootDir
+					 * */
+					if(countUpOneFolder>countDirFile) {
+						this.statusCode = 403;
+						return false;
+					}
+				}
+			}
+			
+			return true;
 		}
 		
 		public String printResponse() {
