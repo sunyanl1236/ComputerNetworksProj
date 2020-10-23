@@ -60,30 +60,39 @@ public class MultiServerThread extends Thread{
 				if(line.equals("")) {
 					break;
 				}
-				request.append(line);
+				request.append(line).append("\r\n");
 			}
 			while(true);
 			
 			//if has content length, read request body
 			if(this.hasContentLength) {
+				System.out.println("has request body.");
 				char c;
 				for(int j=0; j< this.contentLen; j++) {
 					c = (char)in.read();
 					this.reqBody += c;
 				}
+				request.append("\r\n").append(this.reqBody);
 			}
+			//print request //test
+			System.out.println("\n\nPrint the request:");
+			System.out.println(request.toString());
 			
 			//get response
 			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody);
 			this.response = this.resGenetator.printResponse();
 			
-			//print response
+			//print response //test
+			System.out.println("\n\nPrint the response:");
 			System.out.println(this.response);
 			
 			//send the response
 			out.print(this.response);
+			out.flush();
+//			out.close();
 			
 			if(clientSocket != null) {
+//				System.out.println("Close the client Socket");
 				clientSocket.close();
 			}
 		}

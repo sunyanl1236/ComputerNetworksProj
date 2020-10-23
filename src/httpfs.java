@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import CustomSocketServer.MultiServerThread;
 import CustomSocketServer.ServerCLIImplement;
@@ -7,8 +8,6 @@ import CustomSocketServer.ServerCLIImplement;
 public class httpfs {
 
 	public static void main(String[] args) {
-//		System.out.println("Hello wORLD.");
-		
 		ServerSocket serverSocket = null;
 		
 		ServerCLIImplement parseCommand = new ServerCLIImplement(args);
@@ -18,7 +17,8 @@ public class httpfs {
 		try {
 			serverSocket = new ServerSocket(portNumber);
 			while(listening) {
-				new MultiServerThread(serverSocket.accept(), parseCommand.getRootDirPath()).start();
+				Socket cs = serverSocket.accept();
+				new MultiServerThread(cs, parseCommand.getRootDirPath()).start();
 			}
 			
 			if(serverSocket != null) {

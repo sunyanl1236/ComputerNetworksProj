@@ -10,10 +10,15 @@ import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class HttpResponseGenerator {
 	/* Using singleton pattern to create one and only one request for each command line
@@ -32,11 +37,6 @@ public class HttpResponseGenerator {
 			statusCodePhrase.put(201, "201 Created");
 			statusCodePhrase.put(400, "400 Bad Request");
 			statusCodePhrase.put(403, "403 Forbidden ");
-			
-			//check content in statusCodePhrase
-			for(Map.Entry<Integer, String> kv : statusCodePhrase.entrySet()) {
-				System.out.println("key: "+ kv.getKey() + " value: "+ kv.getValue());
-			}
 		}
 		
 		public static HttpResponseGenerator getResponseObj() {
@@ -75,7 +75,10 @@ public class HttpResponseGenerator {
 		//return the status code
 		public void processGetReq(String queryDir, String rootDir) {
 			Path path = Paths.get(rootDir+queryDir);
+			File f = path.toFile();
 			System.out.println("Full path is "+rootDir+queryDir);
+			System.out.println("is file: "+f.isFile());
+			System.out.println("is directory: "+Files.isDirectory(path));
 			
 			//check secure access, if go outside of the root directory, return directly
 			if(!checkSecureAccess(queryDir)) {
@@ -85,12 +88,13 @@ public class HttpResponseGenerator {
 			try {
 				if(Files.isDirectory(path)) { //check if the path is a dir
 //				System.out.println("It's a directory.");
-					if(Files.isReadable(path)) { //if readable
+					if(hasOthersRead(path)) { //if readable
+						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
 						//print all the dir and files in this path
 						DirectoryStream<Path> dirStream = Files.newDirectoryStream(path);
+						resBody += "The request path is a directory, print all files and directories in the path: \n";
 						for (Path entry : dirStream) {
-							resBody += "The request path is a directory, print all files and directories in the path: ";
-							resBody += (entry.getFileName().toString()+"/n");  
+							resBody += (entry.getFileName().toString()+"\n");  
 						}
 						
 						if(!this.resBody.isEmpty()) {
@@ -101,8 +105,6 @@ public class HttpResponseGenerator {
 							
 							//add Content-Type header
 							resHeader.put("Content-Type", "text/plain");
-							
-							System.out.println(resBody);
 						}
 						else {
 							this.statusCode = 204;
@@ -114,18 +116,14 @@ public class HttpResponseGenerator {
 						System.out.println("Dir not readable.");
 					}
 				}// end check dir
-				else if(Files.isRegularFile(path)) { //check if the path is a file
-					if(Files.isReadable(path)) { //check permission of a file
+				else if(f.isFile()) { //check if the path is a file
+					if(hasOthersRead(path)) { //check permission of a file
+						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
 						System.out.println("Is a file.");
 						String mimeType = Files.probeContentType(path);
 						
-//						BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
-//						FileTime lastModified = attr.lastModifiedTime();
-//						DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
-//						String dataString = formatter.withZone(ZoneId.systemDefault()).format(FileTime.from(0, TimeUnit.MILLISECONDS).toInstant());
-						
 						//read the file content
-						File f = path.toFile();
+						//File f = path.toFile();
 						BufferedReader br = new BufferedReader(new FileReader(f));
 						StringBuilder sb = new StringBuilder();
 						String line;
@@ -145,7 +143,7 @@ public class HttpResponseGenerator {
 							//add Content-Type header
 							resHeader.put("Content-Type", mimeType);
 							
-							System.out.println(resBody);
+							System.out.println("resBody: "+resBody);
 						} else {
 							this.statusCode = 204;
 							System.out.println("empty file");
@@ -191,7 +189,8 @@ public class HttpResponseGenerator {
 					if(	Files.isDirectory(p)) { //dir exists
 						//if the dir is readable, go to the dir
 						//if the dir is not readable, end function
-						if(!Files.isReadable(p)) { 
+						if(!hasOthersRead(p)) { 
+							System.out.println("hasOthersRead: "+ hasOthersRead(p));//test
 							this.statusCode = 403;
 							System.out.println("Cannot read the dir.");
 							return;
@@ -210,8 +209,9 @@ public class HttpResponseGenerator {
 				else { //if is last elt --> file
 					try {
 						if(	Files.isRegularFile(p)) { //file exists
+							System.out.println("hasOthersWrite: "+ hasOthersWrite(p));//test
 							//check permission
-							if(!Files.isWritable(p)) {
+							if(!hasOthersWrite(p)) {
 								this.statusCode = 403;
 								System.out.println("Cannot write the file.");
 								return;
@@ -230,7 +230,8 @@ public class HttpResponseGenerator {
 						System.out.println("Successfully wrote to the file.");
 						
 						//set if anyone can overwrite it
-						f.setWritable(hasOverwrite);
+//						f.setWritable(hasOverwrite);
+						removeOthersWrite(p);
 						this.statusCode = 200;
 					} 
 					catch (IOException e) {
@@ -281,6 +282,55 @@ public class HttpResponseGenerator {
 			return true;
 		}
 		
+		public boolean hasOthersRead(Path p) {
+			try {
+				Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(p);
+				for(PosixFilePermission pp : permissions) {
+//					System.out.println(pp.toString());
+					if(pp.toString().equals("OTHERS_READ")) {
+						return true;
+					}
+				}
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
+		
+		public boolean hasOthersWrite(Path p) {
+			try {
+				Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(p);
+				for(PosixFilePermission pp : permissions) {
+//					System.out.println(pp.toString());
+					if(pp.toString().equals("OTHERS_WRITE")) {
+						return true;
+					}
+				}
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+			return false;
+		}
+		
+		public void removeOthersWrite(Path p) {
+			try {
+				Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(p);
+				permissions.remove(PosixFilePermission.OTHERS_WRITE);
+				System.out.println("after remove OTHERS_WRITE");
+				
+				//test
+				for(PosixFilePermission pp : permissions) {
+					System.out.println(pp.toString());
+				}
+				Files.setPosixFilePermissions(p, permissions);
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		public String printResponse() {
 			StringBuilder sb = new StringBuilder();
 			//status line
@@ -293,9 +343,8 @@ public class HttpResponseGenerator {
 			}
 			
 			//Date header
-			LocalDate date = LocalDate.now();
 			DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
-			String dataString = date.format(formatter);
+			String dataString = LocalDateTime.now().atZone(ZoneId.of("GMT")).format(formatter);
 			sb.append("Date: ").append(dataString).append("\r\n");
      
 			sb.append("Server: Concordia Server-HTTP/1.0\r\n");
