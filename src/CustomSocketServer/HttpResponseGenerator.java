@@ -180,13 +180,21 @@ public class HttpResponseGenerator {
 			
 			String fullPath = rootDir;
 			String[] splittedQueryDir = queryDir.split("/");
-			for(int i=0; i< splittedQueryDir.length; i++) {
-				fullPath = rootDir+File.separator+splittedQueryDir[i];
+			//test
+			System.out.println("Print splittedQueryDir:");
+			for(int k=1; k< splittedQueryDir.length; k++) {
+				System.out.println(splittedQueryDir[k]);
+			}
+			
+			for(int i=1; i< splittedQueryDir.length; i++) {
+				fullPath += File.separator+splittedQueryDir[i];
+				System.out.println("fullPath in processPost: "+ fullPath);
 				Path p = Paths.get(fullPath);
+				File ff = p.toFile();
 				
 				if(i != splittedQueryDir.length-1) { //if not the last elt --> dir
 					//check if it's Dir (everthing in between the root folder and last element should be directory)
-					if(	Files.isDirectory(p)) { //dir exists
+					if(ff.exists()) { //dir exists
 						//if the dir is readable, go to the dir
 						//if the dir is not readable, end function
 						if(!hasOthersRead(p)) { 
@@ -208,7 +216,7 @@ public class HttpResponseGenerator {
 				}
 				else { //if is last elt --> file
 					try {
-						if(	Files.isRegularFile(p)) { //file exists
+						if(ff.exists()) { //file exists
 							System.out.println("hasOthersWrite: "+ hasOthersWrite(p));//test
 							//check permission
 							if(!hasOthersWrite(p)) {
@@ -222,16 +230,22 @@ public class HttpResponseGenerator {
 							this.statusCode = 201;
 						}
 						
-						FileWriter fw;
-						File f = p.toFile();
-						fw = new FileWriter(f);
-						fw.write(reqBody);
-						fw.close();
-						System.out.println("Successfully wrote to the file.");
+						if(!reqBody.isEmpty()) {
+							FileWriter fw;
+							File f = p.toFile();
+							fw = new FileWriter(f);
+							fw.write(reqBody);
+							fw.close();
+							System.out.println("Successfully wrote to the file.");
+						}
+						else {
+							System.out.println("No request body.");
+						}
 						
 						//set if anyone can overwrite it
-//						f.setWritable(hasOverwrite);
-						removeOthersWrite(p);
+						if(!hasOverwrite) {
+							removeOthersWrite(p);
+						}
 						this.statusCode = 200;
 					} 
 					catch (IOException e) {

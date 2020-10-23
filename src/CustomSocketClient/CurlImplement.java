@@ -86,13 +86,13 @@ public class CurlImplement {
 		//option -d and -f are mutually exclusive
 		optionGroup.addOption(
 				Option.builder(DATA)
-				.longOpt("inline data")
+//				.longOpt("inline data")
 				.hasArg()
 				.desc("Associates an inline data to the body HTTP POST Request.")
 				.build());
 		optionGroup.addOption(
 				Option.builder(FILE)
-				.longOpt("file")
+//				.longOpt("file")
 				.hasArg()
 				.desc("Associates the content of a file to the body HTTP POST request.")
 				.build());
@@ -193,7 +193,7 @@ public class CurlImplement {
 			}
 			if(cmd.hasOption(FILE)) {
 				this.hasFile = true;
-				this.argsFile = new String(Files.readAllBytes(Paths.get(cmd.getOptionValue(FILE))));
+				this.argsFile = cmd.getOptionValue(FILE);
 			}
 			if(cmd.hasOption(OUT)) {
 				this.hasOutputFile = true;
@@ -204,14 +204,15 @@ public class CurlImplement {
 			}
 		} 
 		catch(ParseException e) {
+			System.out.println("parseOptions ParseException");
 			System.out.println(e.getMessage());
 			printHelpMsg();
 		} 
-		catch (IOException e) {
-			//e.printStackTrace();
-			System.out.println(e.getMessage());
-			printHelpMsg();
-		}
+//		catch (IOException e) {
+//			System.out.println("parseOptions IOException");
+//			System.out.println(e.getMessage());
+//			printHelpMsg();
+//		}
 	}
 	
 	private void printHelpMsg() {

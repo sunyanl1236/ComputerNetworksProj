@@ -9,7 +9,7 @@ public class HttpRequestGenerator {
 	private String method;
 	private String relativePath;
 	private HashMap<String, String> reqHeader = new HashMap<>();
-	private String reqBody;
+	private String reqBody="";
 	private String reqQueryParam;
 	private String hostName;
 	private boolean hasOverwrite;
@@ -69,6 +69,8 @@ public class HttpRequestGenerator {
 			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
 		}
 		//content-length
+		System.out.println("this.method: "+this.method);
+		System.out.println("this.reqBody.isEmpty(): "+this.reqBody.isEmpty());
 		if(this.method.equals("POST") && !this.reqBody.isEmpty() && !reqHeader.containsKey("Content-Length")) {
 			sb.append("Content-Length: ").append(this.reqBody.length()).append("\r\n");
 		}

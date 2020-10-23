@@ -26,7 +26,7 @@ public class SocketClient {
 //		int portNum = 80;
 		
 		try {
-			socket = new Socket(host, 80);
+			socket = new Socket(host, 8080);
 			
 			in = socket.getInputStream();
 			out = socket.getOutputStream();
@@ -108,11 +108,6 @@ public class SocketClient {
 					//update Location url
 					redirectStr = response.toString().split("Location: ", 2)[1];
 					redirectUrl = redirectStr.split("\r\n",2)[0];
-					
-					//reset port number
-//					portNum = newUrl.getProtocol().equals("http") ? 80 : 443;
-//					System.out.println("newUrl.getProtocol()"+newUrl.getProtocol());
-//					System.out.println("Port number now is "+ portNum);
 					
 					//example: Location: /newStr
 					if(redirectUrl.charAt(0) == '/') {

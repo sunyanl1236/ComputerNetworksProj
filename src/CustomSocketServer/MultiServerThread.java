@@ -14,7 +14,7 @@ public class MultiServerThread extends Thread{
 	private String requestMethod;
 	private String queryDir;
 	private String rootDir;
-	private String reqBody;
+	private String reqBody = "";
 	private String response;
 	private boolean hasOverwrite = false;
 	private boolean hasContentLength = false;
@@ -57,12 +57,19 @@ public class MultiServerThread extends Thread{
 				}
 				if(line.contains("Content-Length")) {
 					this.hasContentLength = true;
-					String[] contentLenArr = line.split(" :");
+					String[] contentLenArr = line.split(": ");
 					this.contentLen = Integer.parseInt(contentLenArr[1]);
 					System.out.println("hasContentLength: "+ this.hasContentLength + "contentLen" + this.contentLen);
 				}
 				if(line.contains("Has-Overwrite")) {
-					String[] hasOverwriterArr = line.split(" :");
+					String[] hasOverwriterArr = line.split(": ");
+					
+					//test
+					System.out.println("print hasOverwriterArr: \n");
+					for(String sss: hasOverwriterArr) {
+						System.out.println(sss);
+					}
+					
 					this.hasOverwrite = Boolean.parseBoolean(hasOverwriterArr[1]);
 					System.out.println("hasOverwrite: "+ this.hasOverwrite);
 				}
