@@ -11,10 +11,8 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,7 +90,7 @@ public class HttpResponseGenerator {
 						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
 						//print all the dir and files in this path
 						DirectoryStream<Path> dirStream = Files.newDirectoryStream(path);
-						resBody += "The request path is a directory, print all files and directories in the path: \n";
+						System.out.println("The request path is a directory, print all files and directories in the path: \n");
 						for (Path entry : dirStream) {
 							resBody += (entry.getFileName().toString()+"\n");  
 						}
@@ -146,6 +144,8 @@ public class HttpResponseGenerator {
 							System.out.println("resBody: "+resBody);
 						} else {
 							this.statusCode = 204;
+							this.resBody = "";
+							resHeader.remove("Content-Length");
 							System.out.println("empty file");
 						}
 							
@@ -357,6 +357,7 @@ public class HttpResponseGenerator {
 			if(!this.resBody.isEmpty()) {
 				sb.append(this.resBody);
 			}
+			resBody = ""; //reset resBody
 			return sb.toString();
 		}
 }

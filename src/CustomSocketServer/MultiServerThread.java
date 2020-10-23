@@ -18,13 +18,15 @@ public class MultiServerThread extends Thread{
 	private String response;
 	private boolean hasOverwrite = false;
 	private boolean hasContentLength = false;
+	private boolean hasDebugMsg;
 	private int contentLen = 0;
 	
 	
-	public MultiServerThread(Socket cSocket, String rootDir) {
+	public MultiServerThread(Socket cSocket, String rootDir, boolean hasDebugMsg) {
 		this.clientSocket = cSocket;
 		this.resGenetator = HttpResponseGenerator.getResponseObj();
 		this.rootDir = rootDir;
+		this.hasDebugMsg = hasDebugMsg;
 	}
 	
 	public void run() {
@@ -41,6 +43,13 @@ public class MultiServerThread extends Thread{
 				if(line.contains("GET") || line.contains("POST")) {
 					//split the request line by " "
 					String[] reqLineArr = line.split(" ");
+					
+					//test
+					System.out.println("print reqLineArr\n");
+					for(String ss : reqLineArr) {
+						System.out.println(ss);
+					}
+					
 					this.requestMethod = reqLineArr[0];
 					System.out.println("requestMethod: "+this.requestMethod);
 					this.queryDir = reqLineArr[1];
@@ -74,17 +83,22 @@ public class MultiServerThread extends Thread{
 				}
 				request.append("\r\n").append(this.reqBody);
 			}
-			//print request //test
-			System.out.println("\n\nPrint the request:");
-			System.out.println(request.toString());
+			
+			//print request
+			if(this.hasDebugMsg) {
+				System.out.println("\n\nPrint the request:");
+				System.out.println(request.toString());
+			}
 			
 			//get response
 			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody);
 			this.response = this.resGenetator.printResponse();
 			
 			//print response //test
-			System.out.println("\n\nPrint the response:");
-			System.out.println(this.response);
+			if(this.hasDebugMsg) {
+				System.out.println("\n\nPrint the response:");
+				System.out.println(this.response);
+			}
 			
 			//send the response
 			out.print(this.response);

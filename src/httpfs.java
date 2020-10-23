@@ -18,7 +18,7 @@ public class httpfs {
 			serverSocket = new ServerSocket(portNumber);
 			while(listening) {
 				Socket cs = serverSocket.accept();
-				new MultiServerThread(cs, parseCommand.getRootDirPath()).start();
+				new MultiServerThread(cs, parseCommand.getRootDirPath(), parseCommand.getHasDebugMsg()).start();
 			}
 			
 			if(serverSocket != null) {

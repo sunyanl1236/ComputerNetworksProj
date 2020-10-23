@@ -173,4 +173,8 @@ public class ServerCLIImplement {
 	public String getRootDirPath() {
 		return this.fullDirPath;
 	}
+	
+	public boolean getHasDebugMsg() {
+		return this.hasDebugMsg;
+	}
 }
