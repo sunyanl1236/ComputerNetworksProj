@@ -69,15 +69,17 @@ public class HttpRequestGenerator {
 			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
 		}
 		//content-length
-		System.out.println("this.method: "+this.method);
-		System.out.println("this.reqBody.isEmpty(): "+this.reqBody.isEmpty());
+		//System.out.println("this.method: "+this.method);
+		//System.out.println("this.reqBody.isEmpty(): "+this.reqBody.isEmpty());
 		if(this.method.equals("POST") && !this.reqBody.isEmpty() && !reqHeader.containsKey("Content-Length")) {
 			sb.append("Content-Length: ").append(this.reqBody.length()).append("\r\n");
 		}
 		sb.append("User-Agent: Concordia-HTTP/1.0\r\n").append("Host: ").append(this.hostName).append("\r\n");
 		
 		//custom header info
-		sb.append("Has-Overwrite: ").append(Boolean.toString(this.hasOverwrite)).append("\r\n");
+		if(hasOverwrite) {
+			sb.append("Has-Overwrite: ").append(Boolean.toString(this.hasOverwrite)).append("\r\n");
+		}
 		sb.append("\r\n");
 		
 		/* check GET and POST request body in main

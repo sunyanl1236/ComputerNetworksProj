@@ -28,6 +28,7 @@ public class CurlImplement {
 	private String argsBody; //parse -d
 	private String argsFile; //parse -f
 	private String argsOutFileName;
+	private boolean argsOverwrite;
 	public boolean hasVerbose = false; //parse -v
 	public boolean hasHeaders = false;
 	public boolean hasOverwrite = false; 
@@ -201,6 +202,7 @@ public class CurlImplement {
 			}
 			if(cmd.hasOption(OVERWRITE)) {
 				this.hasOverwrite = true;
+				this.argsOverwrite = Boolean.parseBoolean(cmd.getOptionValue(OVERWRITE));
 			}
 		} 
 		catch(ParseException e) {
@@ -253,6 +255,6 @@ public class CurlImplement {
 	}
 	
 	public Boolean getHasOverwrite() {
-		return this.hasOverwrite;
+		return this.argsOverwrite;
 	}
 }

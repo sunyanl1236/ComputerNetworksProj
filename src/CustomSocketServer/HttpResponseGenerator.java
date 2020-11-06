@@ -111,6 +111,8 @@ public class HttpResponseGenerator {
 					}
 					else { //if not readable
 						this.statusCode = 403;
+						resHeader.remove("Content-Type");
+						resHeader.remove("Content-Length");
 						System.out.println("Dir not readable.");
 					}
 				}// end check dir
@@ -119,6 +121,7 @@ public class HttpResponseGenerator {
 						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
 						System.out.println("Is a file.");
 						String mimeType = Files.probeContentType(path);
+						System.out.println("mimeType: " + mimeType);
 						
 						//read the file content
 						//File f = path.toFile();
@@ -151,8 +154,10 @@ public class HttpResponseGenerator {
 							
 						
 					}
-					else {
+					else { //file is not readable
 						this.statusCode = 403;
+						resHeader.remove("Content-Type");
+						resHeader.remove("Content-Length");
 						System.out.println("File not readable.");
 					}
 				} //end check file
