@@ -163,6 +163,8 @@ public class HttpResponseGenerator {
 				} //end check file
 				else { //cannot open the path
 					this.statusCode = 404;
+					resHeader.remove("Content-Type");
+					resHeader.remove("Content-Length");
 					System.out.println("Cannot open the path");
 				}
 			}
