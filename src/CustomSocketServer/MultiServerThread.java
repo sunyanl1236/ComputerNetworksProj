@@ -5,12 +5,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
 
 public class MultiServerThread extends Thread{
 	private Socket clientSocket = null;
 	private PrintWriter out = null;
 	private BufferedReader in = null;
 	private HttpResponseGenerator resGenetator = null;
+	
+	Lock rlock = null;
+	Lock wlock = null;
+	
 	private String requestMethod;
 	private String queryDir;
 	private String rootDir;
@@ -22,12 +27,14 @@ public class MultiServerThread extends Thread{
 	private int contentLen = 0;
 	
 	
-	public MultiServerThread(Socket cSocket, String rootDir, boolean hasDebugMsg) {
+	public MultiServerThread(Socket cSocket, String rootDir, boolean hasDebugMsg, Lock rlock, Lock wlock) {
 		this.clientSocket = cSocket;
 		this.resGenetator = HttpResponseGenerator.getResponseObj();
 		this.resGenetator.setDebugMsg(hasDebugMsg);
 		this.rootDir = rootDir;
 		this.hasDebugMsg = hasDebugMsg;
+		this.rlock = rlock;
+		this.wlock = wlock;
 	}
 	
 	public void run() {
@@ -107,7 +114,7 @@ public class MultiServerThread extends Thread{
 			}
 			
 			//get response
-			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody);
+			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody, this.rlock, this.wlock);
 			this.response = this.resGenetator.printResponse();
 			
 			//print response //test

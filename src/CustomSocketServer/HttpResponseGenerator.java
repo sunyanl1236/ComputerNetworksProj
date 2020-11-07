@@ -17,8 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import CustomSocketClient.CurlImplement;
+import java.util.concurrent.locks.Lock;
 
 public class HttpResponseGenerator {
 	/* Using singleton pattern to create one and only one request for each command line
@@ -65,12 +64,16 @@ public class HttpResponseGenerator {
 		}
 		
 		//return the status code
-		public void processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
+		public void processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite, String reqBody, Lock rlock, Lock wlock) {
 			if(requestMethod.toUpperCase().equals("GET")) {
+				rlock.lock();
 				processGetReq(queryDir, rootDir);
+				rlock.unlock();
 			}
 			else if(requestMethod.toUpperCase().equals("POST")) {
+				wlock.lock();
 				processPostReq(queryDir, rootDir, hasOverwrite, reqBody);
+				wlock.unlock();
 			}
 			else {
 				this.statusCode = 400;
@@ -132,7 +135,7 @@ public class HttpResponseGenerator {
 					else { //if not readable
 						this.statusCode = 403;
 						resHeader.remove("Content-Type");
-						resHeader.remove("Content-Length");
+						resHeader.replace("Content-Length", "0");
 						System.out.println("Dir not readable.");
 					}
 				}// end check dir
@@ -170,11 +173,11 @@ public class HttpResponseGenerator {
 							//add Content-Type header
 							resHeader.put("Content-Type", mimeType);
 							
-							System.out.println("resBody: "+resBody);
+							//System.out.println("resBody: "+resBody);
 						} else {
 							this.statusCode = 204;
 							this.resBody = "";
-							resHeader.remove("Content-Length");
+							resHeader.replace("Content-Length", "0");
 							System.out.println("empty file");
 						}
 							
@@ -183,14 +186,14 @@ public class HttpResponseGenerator {
 					else { //file is not readable
 						this.statusCode = 403;
 						resHeader.remove("Content-Type");
-						resHeader.remove("Content-Length");
+						resHeader.replace("Content-Length", "0");
 						System.out.println("File not readable.");
 					}
 				} //end check file
 				else { //cannot open the path
 					this.statusCode = 404;
 					resHeader.remove("Content-Type");
-					resHeader.remove("Content-Length");
+					resHeader.replace("Content-Length", "0");
 					System.out.println("Cannot open the path");
 				}
 			}
@@ -206,6 +209,8 @@ public class HttpResponseGenerator {
 		
 
 		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
+			boolean hasCreatedDirFile = false;
+			
 			//check secure access, if go outside of the root directory, return directly
 			if(this.hasDebugMsg) {
 				System.out.println("checkSecureAccess() in processPostReq(): "+checkSecureAccess(queryDir));
@@ -241,6 +246,8 @@ public class HttpResponseGenerator {
 								System.out.println("hasOthersRead: "+ hasOthersRead(p));//test
 							}
 							this.statusCode = 403;
+							resHeader.remove("Content-Type");
+							resHeader.replace("Content-Length", "0");
 							System.out.println("Cannot read the dir.");
 							return;
 						}
@@ -249,6 +256,7 @@ public class HttpResponseGenerator {
 						try {
 							System.out.println(p.toString()+ "doesn't exist, create the dir.");
 							Files.createDirectory(p);
+							hasCreatedDirFile = true;
 						} catch (IOException e) {
 							//System.out.println("e createDirectory");
 							e.printStackTrace();
@@ -262,13 +270,15 @@ public class HttpResponseGenerator {
 							//check permission
 							if(!hasOthersWrite(p)) {
 								this.statusCode = 403;
+								resHeader.remove("Content-Type");
+								resHeader.replace("Content-Length", "0");
 								System.out.println("Cannot write the file.");
 								return;
 							}
 						}
 						else { //file doesn't exist, create file
 							Files.createFile(p);
-							this.statusCode = 201;
+							hasCreatedDirFile = true;
 						}
 						
 						if(!reqBody.isEmpty()) {
@@ -292,7 +302,14 @@ public class HttpResponseGenerator {
 //						if(!hasOverwrite) {
 //							removeOthersWrite(p);
 //						}
-						this.statusCode = 200;
+						if(hasCreatedDirFile) {
+							this.statusCode = 201;
+						}
+						else {
+							this.statusCode = 200;
+						}
+						resHeader.remove("Content-Type");
+						resHeader.replace("Content-Length", "0");
 					} 
 					catch (IOException e) {
 						e.printStackTrace();
@@ -343,7 +360,7 @@ public class HttpResponseGenerator {
 					 * */
 					if(countUpOneFolder>countDirFile) {
 						resHeader.remove("Content-Type");
-						resHeader.remove("Content-Length");
+						resHeader.replace("Content-Length", "0");
 						this.statusCode = 403;
 						return false;
 					}
@@ -420,6 +437,7 @@ public class HttpResponseGenerator {
      
 			sb.append("Server: Concordia Server-HTTP/1.0\r\n");
 			sb.append("MIME-version: 1.0\r\n");
+			sb.append("Content-Disposition: attachment; filename = \"file_name.html\"\r\n");
 			
 			//blank line
 			sb.append("\r\n");

@@ -1,14 +1,21 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import CustomSocketServer.MultiServerThread;
 import CustomSocketServer.ServerCLIImplement;
 
 public class httpfs {
-
+	final static ReadWriteLock rwlock = new ReentrantReadWriteLock();
+	final static Lock rlock = rwlock.readLock();
+	final static Lock wlock = rwlock.writeLock();
+	
 	public static void main(String[] args) {
 		ServerSocket serverSocket = null;
+		
 		
 		ServerCLIImplement parseCommand = new ServerCLIImplement(args);
 		int portNumber = parseCommand.getFinalPortNum();
@@ -19,7 +26,7 @@ public class httpfs {
 			serverSocket = new ServerSocket(portNumber);
 			while(listening) {
 				Socket cs = serverSocket.accept();
-				new MultiServerThread(cs, parseCommand.getRootDirPath(), parseCommand.getHasDebugMsg()).start();
+				new MultiServerThread(cs, parseCommand.getRootDirPath(), parseCommand.getHasDebugMsg(), rlock, wlock).start();
 			}
 			
 			if(serverSocket != null) {
