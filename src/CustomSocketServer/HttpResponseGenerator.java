@@ -332,6 +332,9 @@ public class HttpResponseGenerator {
 		}
 		
 		public byte[] processDownload(String queryDir, String rootDir){
+			String[] queryDirArr = queryDir.split("/");
+			String fileName = queryDirArr[queryDirArr.length-1];
+			
 			Path path = Paths.get(rootDir+queryDir);
 			File f = path.toFile();
 			BufferedInputStream bis = null;
@@ -357,7 +360,7 @@ public class HttpResponseGenerator {
 				    //add Content-Type header
 				    resHeader.put("Content-Type", mimeType);
 				    //add Content-Disposition
-				    //resHeader.put("Content-Disposition", "attachment; filename = \"downloadedFile\"");
+				    resHeader.put("Content-Disposition", "attachment ; filename = \"" + fileName + "\"");
 				    
 				    //close BufferedInputStream
 				    if(bis != null) {
@@ -497,7 +500,6 @@ public class HttpResponseGenerator {
      
 			sb.append("Server: Concordia Server-HTTP/1.0\r\n");
 			sb.append("MIME-version: 1.0\r\n");
-			sb.append("Content-Disposition: attachment ; filename = \"file_name.html\"\r\n");
 			
 			//blank line
 			sb.append("\r\n");

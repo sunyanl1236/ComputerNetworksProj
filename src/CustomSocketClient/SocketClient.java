@@ -1,5 +1,7 @@
 package CustomSocketClient;
 
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +47,28 @@ public class SocketClient {
 			while(data != -1) {
 				response.append((char) data);
 				data = in.read();
+			}
+			
+			//if contains "Content-Disposition", download the file
+			if(response.toString().contains("Content-Disposition")) {
+				String[] responseArr = response.toString().split("HTTP/1.0",2);
+				response = new StringBuilder();
+				response.append("HTTP/1.0").append(responseArr[1]);
+				
+				//get filename
+				String[] contentDispositionArr = response.toString().split("filename = \"");
+				int endIndex = contentDispositionArr[1].indexOf('"');
+				String fileName = contentDispositionArr[1].substring(0, endIndex);
+				System.out.println("Content-Disposition file name: " + fileName);
+				
+				//download the file
+				FileOutputStream fos = new FileOutputStream(fileName);
+			    BufferedOutputStream bos = new BufferedOutputStream(fos);
+			    byte[] fileByte = responseArr[0].getBytes();
+			    bos.write(fileByte, 0, fileByte.length);
+			    bos.close();
+				
+				
 			}
 			
 			//handle redirect if status code start with 3xx
@@ -100,6 +124,8 @@ public class SocketClient {
 						response.append((char) data);
 						data = in.read();
 					}
+					
+					
 					System.out.println("response:"+response);
 					
 					//check status code in response again
