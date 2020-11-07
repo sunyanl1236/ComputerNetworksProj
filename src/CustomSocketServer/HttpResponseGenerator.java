@@ -26,6 +26,7 @@ public class HttpResponseGenerator {
 		private HashMap<String, String> resHeader = new HashMap<>();
 		private HashMap<Integer, String> statusCodePhrase = new HashMap<>();
 		private String resBody="";
+		private boolean hasDebugMsg;
 		
 		//constructor
 		private HttpResponseGenerator() {
@@ -53,6 +54,10 @@ public class HttpResponseGenerator {
 			this.statusCode = codeNum;
 		}
 		
+		public void setDebugMsg(boolean debugMsg) {
+			this.hasDebugMsg = debugMsg;
+		}
+		
 		public int getStatusCode() {
 			return this.statusCode;
 		}
@@ -74,13 +79,17 @@ public class HttpResponseGenerator {
 		public void processGetReq(String queryDir, String rootDir) {
 			Path path = Paths.get(rootDir+queryDir);
 			File f = path.toFile();
-			System.out.println("Query path is "+queryDir);
-			System.out.println("Full path is "+rootDir+queryDir);
-			System.out.println("is file: "+f.isFile());
-			System.out.println("is directory: "+Files.isDirectory(path));
+			if(this.hasDebugMsg) {
+				System.out.println("The query path is "+queryDir);
+				System.out.println("Full path is "+rootDir+queryDir);
+				System.out.println("Is file?: "+f.isFile());
+				System.out.println("Is directory?: "+Files.isDirectory(path));
+			}
 			
 			//check secure access, if go outside of the root directory, return directly
-			System.out.println("Check secure access in processGetReq(): "+ checkSecureAccess(queryDir));
+			if(this.hasDebugMsg) {
+				System.out.println("Check secure access in processGetReq(): "+ checkSecureAccess(queryDir));
+			}
 			if(!checkSecureAccess(queryDir)) {
 				System.out.println("Cannot read/write any file outside of the root directory!");
 				return;
@@ -90,10 +99,14 @@ public class HttpResponseGenerator {
 				if(Files.isDirectory(path)) { //check if the path is a dir
 //				System.out.println("It's a directory.");
 					if(hasOthersRead(path)) { //if readable
-						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
+						if(this.hasDebugMsg) {
+							System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
+						}
 						//print all the dir and files in this path
 						DirectoryStream<Path> dirStream = Files.newDirectoryStream(path);
-						System.out.println("The request path is a directory, print all files and directories in the path: \n");
+						if(this.hasDebugMsg) {
+							System.out.println("The request path is a directory, print all files and directories in the path: \n");
+						}
 						for (Path entry : dirStream) {
 							resBody += (entry.getFileName().toString()+"\n");  
 						}
@@ -109,7 +122,9 @@ public class HttpResponseGenerator {
 						}
 						else {
 							this.statusCode = 204;
-							System.out.println("empty file");
+							if(this.hasDebugMsg) {
+								System.out.println("empty file");
+							}
 						}
 					}
 					else { //if not readable
@@ -121,12 +136,16 @@ public class HttpResponseGenerator {
 				}// end check dir
 				else if(f.isFile()) { //check if the path is a file
 					if(hasOthersRead(path)) { //check permission of a file
-						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
-						System.out.println("Is a file.");
+						if(this.hasDebugMsg) {
+							System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
+							System.out.println("Is a file.");
+						}
 						
 						//get content type
 						String mimeType = Files.probeContentType(path);
-						System.out.println("mimeType: " + mimeType);
+						if(this.hasDebugMsg) {
+							System.out.println("mimeType: " + mimeType);
+						}
 						
 						//read the file content
 						//File f = path.toFile();
@@ -174,11 +193,11 @@ public class HttpResponseGenerator {
 				}
 			}
 			catch(NotDirectoryException e) {
-				System.out.println("Dir E in processGetReq");
+				//System.out.println("Dir E in processGetReq");
 				e.printStackTrace();
 			}
 			catch(IOException e) {
-				System.out.println("IO E in processGetReq");
+				//System.out.println("IO E in processGetReq");
 				e.printStackTrace();
 			}
 		}
@@ -186,7 +205,9 @@ public class HttpResponseGenerator {
 
 		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
 			//check secure access, if go outside of the root directory, return directly
-			System.out.println("checkSecureAccess() in processPostReq(): "+checkSecureAccess(queryDir));
+			if(this.hasDebugMsg) {
+				System.out.println("checkSecureAccess() in processPostReq(): "+checkSecureAccess(queryDir));
+			}
 			if(!checkSecureAccess(queryDir)) {
 				System.out.println("Cannot read/write any file outside of the root directory!");
 				return;
@@ -195,14 +216,16 @@ public class HttpResponseGenerator {
 			String fullPath = rootDir;
 			String[] splittedQueryDir = queryDir.split("/");
 			//test
-			System.out.println("Print splittedQueryDir:");
-			for(int k=1; k< splittedQueryDir.length; k++) {
-				System.out.println(splittedQueryDir[k]);
+			if(this.hasDebugMsg) {
+				System.out.println("Print splittedQueryDir:");
+				for(int k=1; k< splittedQueryDir.length; k++) {
+					System.out.println(splittedQueryDir[k]);
+				}
 			}
 			
 			for(int i=1; i< splittedQueryDir.length; i++) {
 				fullPath += File.separator+splittedQueryDir[i];
-				System.out.println("fullPath in processPost: "+ fullPath);
+				//System.out.println("fullPath in processPost: "+ fullPath);
 				Path p = Paths.get(fullPath);
 				File ff = p.toFile();
 				
@@ -212,7 +235,9 @@ public class HttpResponseGenerator {
 						//if the dir is readable, go to the dir
 						//if the dir is not readable, end function
 						if(!hasOthersRead(p)) { 
-							System.out.println("hasOthersRead: "+ hasOthersRead(p));//test
+							if(this.hasDebugMsg) {
+								System.out.println("hasOthersRead: "+ hasOthersRead(p));//test
+							}
 							this.statusCode = 403;
 							System.out.println("Cannot read the dir.");
 							return;
@@ -223,7 +248,7 @@ public class HttpResponseGenerator {
 							System.out.println(p.toString()+ "doesn't exist, create the dir.");
 							Files.createDirectory(p);
 						} catch (IOException e) {
-							System.out.println("e createDirectory");
+							//System.out.println("e createDirectory");
 							e.printStackTrace();
 						}
 					}
@@ -231,7 +256,7 @@ public class HttpResponseGenerator {
 				else { //if is last elt --> file
 					try {
 						if(ff.exists()) { //file exists
-							System.out.println("hasOthersWrite: "+ hasOthersWrite(p));//test
+							//System.out.println("hasOthersWrite: "+ hasOthersWrite(p));//test
 							//check permission
 							if(!hasOthersWrite(p)) {
 								this.statusCode = 403;

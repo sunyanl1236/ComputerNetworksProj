@@ -25,6 +25,7 @@ public class MultiServerThread extends Thread{
 	public MultiServerThread(Socket cSocket, String rootDir, boolean hasDebugMsg) {
 		this.clientSocket = cSocket;
 		this.resGenetator = HttpResponseGenerator.getResponseObj();
+		this.resGenetator.setDebugMsg(hasDebugMsg);
 		this.rootDir = rootDir;
 		this.hasDebugMsg = hasDebugMsg;
 	}
@@ -45,33 +46,41 @@ public class MultiServerThread extends Thread{
 					String[] reqLineArr = line.split(" ");
 					
 					//test
-					System.out.println("print reqLineArr\n");
-					for(String ss : reqLineArr) {
-						System.out.println(ss);
+					if(this.hasDebugMsg) {
+						System.out.println("print reqLineArr\n");
+						for(String ss : reqLineArr) {
+							System.out.println(ss);
+						}
 					}
 					
 					this.requestMethod = reqLineArr[0];
-					System.out.println("requestMethod: "+this.requestMethod);
 					this.queryDir = reqLineArr[1];
-					System.out.println("queryDir: "+this.queryDir);
+					if(this.hasDebugMsg) {
+						System.out.println("requestMethod: "+this.requestMethod);
+						System.out.println("queryDir: "+this.queryDir);
+					}
 				}
 				if(line.contains("Content-Length")) {
 					this.hasContentLength = true;
 					String[] contentLenArr = line.split(": ");
 					this.contentLen = Integer.parseInt(contentLenArr[1]);
-					System.out.println("hasContentLength: "+ this.hasContentLength + "contentLen" + this.contentLen);
+					//System.out.println("hasContentLength: "+ this.hasContentLength + "contentLen" + this.contentLen);
 				}
 				if(line.contains("Has-Overwrite")) {
 					String[] hasOverwriterArr = line.split(": ");
 					
 					//test
-					System.out.println("print hasOverwriterArr: \n");
-					for(String sss: hasOverwriterArr) {
-						System.out.println(sss);
+					if(this.hasDebugMsg) {
+						System.out.println("print hasOverwriterArr: \n");
+						for(String sss: hasOverwriterArr) {
+							System.out.println(sss);
+						}
 					}
 					
 					this.hasOverwrite = Boolean.parseBoolean(hasOverwriterArr[1]);
-					System.out.println("hasOverwrite: "+ this.hasOverwrite);
+					if(this.hasDebugMsg) {
+						System.out.println("hasOverwrite: "+ this.hasOverwrite);
+					}
 				}
 				if(line.equals("")) {
 					break;
@@ -82,7 +91,7 @@ public class MultiServerThread extends Thread{
 			
 			//if has content length, read request body
 			if(this.hasContentLength) {
-				System.out.println("has request body.");
+				System.out.println("Has request body.");
 				char c;
 				for(int j=0; j< this.contentLen; j++) {
 					c = (char)in.read();
