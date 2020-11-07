@@ -3,6 +3,7 @@ package CustomSocketServer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.locks.Lock;
@@ -25,6 +26,7 @@ public class MultiServerThread extends Thread{
 	private boolean hasContentLength = false;
 	private boolean hasDebugMsg;
 	private int contentLen = 0;
+	private boolean needDownload = false;
 	
 	
 	public MultiServerThread(Socket cSocket, String rootDir, boolean hasDebugMsg, Lock rlock, Lock wlock) {
@@ -39,7 +41,8 @@ public class MultiServerThread extends Thread{
 	
 	public void run() {
 		try {
-			out = new PrintWriter(clientSocket.getOutputStream(), true);
+			OutputStream os = clientSocket.getOutputStream();
+			out = new PrintWriter(os, true);
 			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			
 			StringBuilder request = new StringBuilder();
@@ -62,6 +65,7 @@ public class MultiServerThread extends Thread{
 					
 					this.requestMethod = reqLineArr[0];
 					this.queryDir = reqLineArr[1];
+					
 					if(this.hasDebugMsg) {
 						System.out.println("requestMethod: "+this.requestMethod);
 						System.out.println("queryDir: "+this.queryDir);
@@ -107,6 +111,11 @@ public class MultiServerThread extends Thread{
 				request.append("\r\n").append(this.reqBody);
 			}
 			
+			//check if the file need to be download
+			if(this.queryDir.equals("/dir1/dir11/download.txt")) {
+				this.needDownload = true;
+			}
+			
 			//print request
 			if(this.hasDebugMsg) {
 				System.out.println("\n\nPrint the request:");
@@ -114,7 +123,7 @@ public class MultiServerThread extends Thread{
 			}
 			
 			//get response
-			this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody, this.rlock, this.wlock);
+			byte[] result = this.resGenetator.processRequest(this.requestMethod, this.queryDir, this.rootDir, this.hasOverwrite, this.reqBody, this.rlock, this.wlock, this.needDownload);
 			this.response = this.resGenetator.printResponse();
 			
 			//print response //test
@@ -125,11 +134,14 @@ public class MultiServerThread extends Thread{
 			
 			//send the response
 			out.print(this.response);
+			
+			if(result != null) {
+				os.write(result);
+				os.flush();
+			}
 			out.flush();
-//			out.close();
 			
 			if(clientSocket != null) {
-//				System.out.println("Close the client Socket");
 				clientSocket.close();
 			}
 		}

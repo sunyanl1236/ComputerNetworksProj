@@ -1,7 +1,9 @@
 package CustomSocketServer;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -64,7 +66,16 @@ public class HttpResponseGenerator {
 		}
 		
 		//return the status code
-		public void processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite, String reqBody, Lock rlock, Lock wlock) {
+		public byte[] processRequest(String requestMethod,String queryDir, String rootDir, boolean hasOverwrite, String reqBody, Lock rlock, Lock wlock, boolean needDownload) {
+			if(needDownload) {
+				rlock.lock();
+				System.out.println("Downloading...");
+				byte[] downloadResult = processDownload(queryDir, rootDir);
+				rlock.unlock();
+				System.out.println("Finish download!");
+				return downloadResult;
+			}
+			
 			if(requestMethod.toUpperCase().equals("GET")) {
 				rlock.lock();
 				processGetReq(queryDir, rootDir);
@@ -78,6 +89,7 @@ public class HttpResponseGenerator {
 			else {
 				this.statusCode = 400;
 			}
+			return null;
 		}
 		
 		//return the status code
@@ -135,7 +147,7 @@ public class HttpResponseGenerator {
 					else { //if not readable
 						this.statusCode = 403;
 						resHeader.remove("Content-Type");
-						resHeader.replace("Content-Length", "0");
+						resHeader.put("Content-Length", "0");
 						System.out.println("Dir not readable.");
 					}
 				}// end check dir
@@ -172,12 +184,11 @@ public class HttpResponseGenerator {
 							resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
 							//add Content-Type header
 							resHeader.put("Content-Type", mimeType);
-							
-							//System.out.println("resBody: "+resBody);
 						} else {
 							this.statusCode = 204;
 							this.resBody = "";
-							resHeader.replace("Content-Length", "0");
+							resHeader.remove("Content-Type");
+							resHeader.put("Content-Length", "0");
 							System.out.println("empty file");
 						}
 							
@@ -186,14 +197,14 @@ public class HttpResponseGenerator {
 					else { //file is not readable
 						this.statusCode = 403;
 						resHeader.remove("Content-Type");
-						resHeader.replace("Content-Length", "0");
+						resHeader.put("Content-Length", "0");
 						System.out.println("File not readable.");
 					}
 				} //end check file
 				else { //cannot open the path
 					this.statusCode = 404;
 					resHeader.remove("Content-Type");
-					resHeader.replace("Content-Length", "0");
+					resHeader.put("Content-Length", "0");
 					System.out.println("Cannot open the path");
 				}
 			}
@@ -247,7 +258,7 @@ public class HttpResponseGenerator {
 							}
 							this.statusCode = 403;
 							resHeader.remove("Content-Type");
-							resHeader.replace("Content-Length", "0");
+							resHeader.put("Content-Length", "0");
 							System.out.println("Cannot read the dir.");
 							return;
 						}
@@ -271,7 +282,7 @@ public class HttpResponseGenerator {
 							if(!hasOthersWrite(p)) {
 								this.statusCode = 403;
 								resHeader.remove("Content-Type");
-								resHeader.replace("Content-Length", "0");
+								resHeader.put("Content-Length", "0");
 								System.out.println("Cannot write the file.");
 								return;
 							}
@@ -309,7 +320,7 @@ public class HttpResponseGenerator {
 							this.statusCode = 200;
 						}
 						resHeader.remove("Content-Type");
-						resHeader.replace("Content-Length", "0");
+						resHeader.put("Content-Length", "0");
 					} 
 					catch (IOException e) {
 						e.printStackTrace();
@@ -318,6 +329,55 @@ public class HttpResponseGenerator {
 				}
 			}
 			
+		}
+		
+		public byte[] processDownload(String queryDir, String rootDir){
+			Path path = Paths.get(rootDir+queryDir);
+			File f = path.toFile();
+			BufferedInputStream bis = null;
+			
+			try {
+				if(hasOthersRead(path)) { //check permission of a file
+					//get content type
+					String mimeType = Files.probeContentType(path);
+					
+					//read the file content
+					byte[] mybytearray = new byte[(int) f.length()];
+				    bis = new BufferedInputStream(new FileInputStream(f));
+				    bis.read(mybytearray, 0, mybytearray.length);
+				    
+//				    OutputStream os = sock.getOutputStream();
+//				    os.write(mybytearray, 0, mybytearray.length);
+//				    os.flush();
+					
+				    this.statusCode = 200;
+					
+				    //add Content-Length header
+				    resHeader.put("Content-Length", Integer.toString(mybytearray.length));
+				    //add Content-Type header
+				    resHeader.put("Content-Type", mimeType);
+				    //add Content-Disposition
+				    //resHeader.put("Content-Disposition", "attachment; filename = \"downloadedFile\"");
+				    
+				    //close BufferedInputStream
+				    if(bis != null) {
+				    	bis.close();
+				    }
+				    
+				    return mybytearray;
+				}
+				else { //file is not readable
+					this.statusCode = 403;
+					resHeader.remove("Content-Type");
+					resHeader.put("Content-Length", "0");
+					System.out.println("File not readable. Cannot download this file!");
+					
+				}
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+			return null;
 		}
 		
 		/* if the queryDir starts with /.., return false
@@ -360,7 +420,7 @@ public class HttpResponseGenerator {
 					 * */
 					if(countUpOneFolder>countDirFile) {
 						resHeader.remove("Content-Type");
-						resHeader.replace("Content-Length", "0");
+						resHeader.remove("Content-Length");
 						this.statusCode = 403;
 						return false;
 					}
@@ -437,7 +497,7 @@ public class HttpResponseGenerator {
      
 			sb.append("Server: Concordia Server-HTTP/1.0\r\n");
 			sb.append("MIME-version: 1.0\r\n");
-			//sb.append("Content-Disposition: attachment; filename = \"file_name.html\"\r\n");
+			sb.append("Content-Disposition: attachment ; filename = \"file_name.html\"\r\n");
 			
 			//blank line
 			sb.append("\r\n");
