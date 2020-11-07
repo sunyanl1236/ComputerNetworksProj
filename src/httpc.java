@@ -20,7 +20,7 @@ public class httpc {
 			reqGenerator.setReqHeader(curl.getHeaders());
 		}
 		reqGenerator.setReqMethod(curl.getMethod());
-		reqGenerator.setHasOverwrite(curl.getHasOverwrite());
+//		reqGenerator.setHasOverwrite(curl.getHasOverwrite());
 		
 		String outFileName="";
 		if(curl.hasOutputFile) {

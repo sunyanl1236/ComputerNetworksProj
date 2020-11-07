@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import CustomSocketClient.CurlImplement;
+
 public class HttpResponseGenerator {
 	/* Using singleton pattern to create one and only one request for each command line
 	 * */
@@ -272,7 +274,12 @@ public class HttpResponseGenerator {
 						if(!reqBody.isEmpty()) {
 							FileWriter fw;
 							File f = p.toFile();
-							fw = new FileWriter(f);
+							if(!hasOverwrite) { //don't have overwrite, append the content
+								fw = new FileWriter(f, true);
+							}
+							else { //has overwrite, overwrite the content
+								fw = new FileWriter(f);
+							}
 							fw.write(reqBody);
 							fw.close();
 							System.out.println("Successfully wrote to the file.");
@@ -282,9 +289,9 @@ public class HttpResponseGenerator {
 						}
 						
 						//set if anyone can overwrite it
-						if(!hasOverwrite) {
-							removeOthersWrite(p);
-						}
+//						if(!hasOverwrite) {
+//							removeOthersWrite(p);
+//						}
 						this.statusCode = 200;
 					} 
 					catch (IOException e) {

@@ -13,6 +13,7 @@ public class httpfs {
 		ServerCLIImplement parseCommand = new ServerCLIImplement(args);
 		int portNumber = parseCommand.getFinalPortNum();
 		boolean listening = true;
+		int count=0;
 		
 		try {
 			serverSocket = new ServerSocket(portNumber);
