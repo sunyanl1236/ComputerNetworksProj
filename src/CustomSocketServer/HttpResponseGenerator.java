@@ -437,7 +437,7 @@ public class HttpResponseGenerator {
      
 			sb.append("Server: Concordia Server-HTTP/1.0\r\n");
 			sb.append("MIME-version: 1.0\r\n");
-			sb.append("Content-Disposition: attachment; filename = \"file_name.html\"\r\n");
+			//sb.append("Content-Disposition: attachment; filename = \"file_name.html\"\r\n");
 			
 			//blank line
 			sb.append("\r\n");
