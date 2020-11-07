@@ -112,7 +112,7 @@ public class MultiServerThread extends Thread{
 			}
 			
 			//check if the file need to be download
-			if(this.queryDir.equals("/dir1/dir11/download.txt")) {
+			if(this.queryDir.equals("/dir1/dir11/download.txt") || this.queryDir.equals("/dir2/downloadpage.html")) {
 				this.needDownload = true;
 			}
 			
