@@ -74,12 +74,15 @@ public class HttpResponseGenerator {
 		public void processGetReq(String queryDir, String rootDir) {
 			Path path = Paths.get(rootDir+queryDir);
 			File f = path.toFile();
+			System.out.println("Query path is "+queryDir);
 			System.out.println("Full path is "+rootDir+queryDir);
 			System.out.println("is file: "+f.isFile());
 			System.out.println("is directory: "+Files.isDirectory(path));
 			
 			//check secure access, if go outside of the root directory, return directly
+			System.out.println("Check secure access in processGetReq(): "+ checkSecureAccess(queryDir));
 			if(!checkSecureAccess(queryDir)) {
+				System.out.println("Cannot read/write any file outside of the root directory!");
 				return;
 			}
 			
@@ -120,6 +123,8 @@ public class HttpResponseGenerator {
 					if(hasOthersRead(path)) { //check permission of a file
 						System.out.println("hasOthersRead: "+ hasOthersRead(path));//test
 						System.out.println("Is a file.");
+						
+						//get content type
 						String mimeType = Files.probeContentType(path);
 						System.out.println("mimeType: " + mimeType);
 						
@@ -181,7 +186,9 @@ public class HttpResponseGenerator {
 
 		public void processPostReq(String queryDir, String rootDir, boolean hasOverwrite, String reqBody) {
 			//check secure access, if go outside of the root directory, return directly
+			System.out.println("checkSecureAccess() in processPostReq(): "+checkSecureAccess(queryDir));
 			if(!checkSecureAccess(queryDir)) {
+				System.out.println("Cannot read/write any file outside of the root directory!");
 				return;
 			}
 			
@@ -273,27 +280,38 @@ public class HttpResponseGenerator {
 			int countUpOneFolder = 0;
 			String[] splittedDir = queryDir.split("/");
 			
+			//test
+//			System.out.println("\nprint splittedDir in checkSecureAccess(): ");
+//			for(String s : splittedDir) {
+//				if(s.isEmpty()) {
+//					continue;
+//				}
+//				System.out.println(s);
+//			}
+//			System.out.println();
+			
 			if(splittedDir.length > 0) {
-				//case 1: rootDir/..
-				if(splittedDir[0].equals("..")) {
-					this.statusCode = 403;
-					return false;
-				}
-				
 				//loop through the string array and check secure access
 				for(String s : splittedDir) {
 					//first string s is dir or file
+					if(s.isEmpty()) {
+						continue;
+					}
+					
 					if(s.equals("..")) {
 						countUpOneFolder++;
 					} else {
 						countDirFile++;
 					}
 					
-					/* case 2:
+					/* case:
+					 * rootDir/..
 					 * rootDir/dir/../.. --> outside of rootDir
 					 * rootDir/dir/../dir/../.. --> outside of rootDir
 					 * */
 					if(countUpOneFolder>countDirFile) {
+						resHeader.remove("Content-Type");
+						resHeader.remove("Content-Length");
 						this.statusCode = 403;
 						return false;
 					}
