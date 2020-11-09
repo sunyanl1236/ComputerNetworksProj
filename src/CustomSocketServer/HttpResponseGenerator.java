@@ -136,6 +136,7 @@ public class HttpResponseGenerator {
 							
 							//add Content-Type header
 							resHeader.put("Content-Type", "text/plain");
+							resHeader.remove("Content-Disposition");
 						}
 						else {
 							this.statusCode = 204;
@@ -146,6 +147,7 @@ public class HttpResponseGenerator {
 					}
 					else { //if not readable
 						this.statusCode = 403;
+						resHeader.remove("Content-Disposition");
 						resHeader.remove("Content-Type");
 						resHeader.put("Content-Length", "0");
 						System.out.println("Dir not readable.");
@@ -184,10 +186,12 @@ public class HttpResponseGenerator {
 							resHeader.put("Content-Length", Integer.toString(this.resBody.length()));
 							//add Content-Type header
 							resHeader.put("Content-Type", mimeType);
+							resHeader.remove("Content-Disposition");
 						} else {
 							this.statusCode = 204;
 							this.resBody = "";
 							resHeader.remove("Content-Type");
+							resHeader.remove("Content-Disposition");
 							resHeader.put("Content-Length", "0");
 							System.out.println("empty file");
 						}
@@ -197,6 +201,7 @@ public class HttpResponseGenerator {
 					else { //file is not readable
 						this.statusCode = 403;
 						resHeader.remove("Content-Type");
+						resHeader.remove("Content-Disposition");
 						resHeader.put("Content-Length", "0");
 						System.out.println("File not readable.");
 					}
@@ -204,6 +209,7 @@ public class HttpResponseGenerator {
 				else { //cannot open the path
 					this.statusCode = 404;
 					resHeader.remove("Content-Type");
+					resHeader.remove("Content-Disposition");
 					resHeader.put("Content-Length", "0");
 					System.out.println("Cannot open the path");
 				}
@@ -258,6 +264,7 @@ public class HttpResponseGenerator {
 							}
 							this.statusCode = 403;
 							resHeader.remove("Content-Type");
+							resHeader.remove("Content-Disposition");
 							resHeader.put("Content-Length", "0");
 							System.out.println("Cannot read the dir.");
 							return;
@@ -282,6 +289,7 @@ public class HttpResponseGenerator {
 							if(!hasOthersWrite(p)) {
 								this.statusCode = 403;
 								resHeader.remove("Content-Type");
+								resHeader.remove("Content-Disposition");
 								resHeader.put("Content-Length", "0");
 								System.out.println("Cannot write the file.");
 								return;
@@ -319,6 +327,7 @@ public class HttpResponseGenerator {
 						else {
 							this.statusCode = 200;
 						}
+						resHeader.remove("Content-Disposition");
 						resHeader.remove("Content-Type");
 						resHeader.put("Content-Length", "0");
 					} 
@@ -371,6 +380,7 @@ public class HttpResponseGenerator {
 				}
 				else { //file is not readable
 					this.statusCode = 403;
+					resHeader.remove("Content-Disposition");
 					resHeader.remove("Content-Type");
 					resHeader.put("Content-Length", "0");
 					System.out.println("File not readable. Cannot download this file!");
@@ -422,6 +432,7 @@ public class HttpResponseGenerator {
 					 * rootDir/dir/../dir/../.. --> outside of rootDir
 					 * */
 					if(countUpOneFolder>countDirFile) {
+						resHeader.remove("Content-Disposition");
 						resHeader.remove("Content-Type");
 						resHeader.remove("Content-Length");
 						this.statusCode = 403;
