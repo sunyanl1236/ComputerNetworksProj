@@ -1,5 +1,9 @@
 /httpc.class
 /httpfs.class
 /test.class
+<<<<<<< HEAD
 org/
 lib/
+=======
+/org/apache/commons/cli/*
+>>>>>>> a86fa7046a06f0cd9ec7cb176216e76cef6adb61
