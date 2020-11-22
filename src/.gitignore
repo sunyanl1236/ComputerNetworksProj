@@ -1,3 +1,4 @@
 /httpc.class
 /httpfs.class
 /test.class
+/org/apache/commons/cli/*
