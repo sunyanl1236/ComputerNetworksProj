@@ -4,6 +4,8 @@ Built a simple remote file manager on top of the HTTP protocol in the server sid
 Enhanced the file server application to support simultaneous multi-requests using Read-Write Lock
 Implemented the support for Content-Type and Content-Disposition headers
 
+Please refer to [ProjectInfo1.pdf](https://github.com/sunyanl1236/ComputerNetworksProj/blob/master/ProjectInfo1.pdf) and [ProjectInfo2.pdf](https://github.com/sunyanl1236/ComputerNetworksProj/blob/master/ProjectInfo2.pdf)
+
 # Detailed Usage
 Server side:
 ```
